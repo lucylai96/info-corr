@@ -18,19 +18,17 @@ highVisOri = visOri(visCon==max(visCon));
 
 %% separate out data by orientations
 
-highConResp0 = highConResp(highVisOri==0,:);
+highConResp15 =  
 
-highConResp15 = highConResp(highVisOri==15,:);
+highConResp30 =  
 
-highConResp30 = highConResp(highVisOri==30,:); 
+highConResp45 =  
 
-highConResp45 = highConResp(highVisOri==45,:); 
+highConResp60 =  
 
-highConResp60 = highConResp(highVisOri==60,:); 
+highConResp75 =  
 
-highConResp75 = highConResp(highVisOri==75,:); 
-
-highConResp90 = highConResp(highVisOri==90,:);
+highConResp99 = 
 
 
 end
