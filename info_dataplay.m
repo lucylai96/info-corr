@@ -10,13 +10,11 @@ addpath('/Users/lucy/Google Drive/Harvard/MatTools/')
 
 setPretty
 
-
-
 processed =0; %first step (truncate trials)
 processed =1; %second step (truncate neurons and trials)
 processed =2; %plot stuff
-processed =3; %choose dimensionality and then calculate
-
+processed =3; %choose dimensionality and then calculate based on both trials and neurons
+%processed =4; %just plotting information against trials
 if processed ==0
     load('j1_171018.mat')
     
@@ -25,21 +23,21 @@ if processed ==0
     highConResp = deResp(visCon==max(visCon),:);
     highConMov = mvSpd(visCon==max(visCon));
     highVisOri = visOri(visCon==max(visCon));
-    orient = unique(visOri); %[0, 15, 30, 45, 60, 75, 90];
+    ori = unique(visOri); %[0, 15, 30, 45, 60, 75, 90];
     
-    %% separate out data by orientations
-    for i  = 1:length(orient)
-        temp = highConResp(highVisOri==orient(i),:); % sort by orientation
-        highConRespOri(:,:,i)= trunc(temp, 800); %truncate all conditions to 800 trials, this is the matrix with all high contrast responses separated by orientation
+    %% separate out data by oriations
+    for i  = 1:length(ori)
+        temp = highConResp(highVisOri==ori(i),:); % sort by oriation
+        highConRespOri(:,:,i)= trunc(temp, 800); %truncate all conditions to 800 trials, this is the matrix with all high contrast responses separated by oriation
     end
     
     % ~500 neurons and 800 trials
     
     %% Fisher information
-    % take two diff orientations 15 deg apart, calculate the FI
+    % take two diff oriations 15 deg apart, calculate the FI
     
-    for i  = 1:length(orient)-1 %comparisons are # of orientations - 1
-        FI(i) = f_info(highConRespOri(:,:,i), highConRespOri(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
+    for i  = 1:length(ori)-1 %comparisons are # of oriations - 1
+        FI(i) = f_info(highConRespOri(:,:,i), highConRespOri(:,:,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
         
     end
     
@@ -61,17 +59,17 @@ if processed ==0
     for t = 100:50:250
         
         for b  = 1:100 %bootstrap 100 times
-            t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),length(orient));
+            t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),length(ori));
             
             % bootstrapping to get a reduced matrix of t trials
-            for i  = 1:length(orient)
+            for i  = 1:length(ori)
                 t_highConRespOri_bsTrials(:,:,i) = datasample(highConRespOri(:,:,i),t,1); % 3rd param: 1=subsampling trials, 2=subsampling neurons
             end
             
-            for i  = 1:length(orient)-1 %comparisons are # of orientations - 1
-                %here the columns are the diff orientation difference
+            for i  = 1:length(ori)-1 %comparisons are # of oriations - 1
+                %here the columns are the diff oriation difference
                 %conditions and the rows are the bootstraps
-                TFI_trials(b,i) = ft_info(t_highConRespOri_bsTrials(:,:,i), t_highConRespOri_bsTrials(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
+                TFI_trials(b,i) = ft_info(t_highConRespOri_bsTrials(:,:,i), t_highConRespOri_bsTrials(:,:,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
                 
             end
             
@@ -99,24 +97,24 @@ elseif processed ==1
             for b  = 1:50 %bootstrap 100 times
                 
                 
-                t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),length(orient));
-                t_highConRespOri_bsNT = zeros(t,n,length(orient));
+                t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),length(ori));
+                t_highConRespOri_bsNT = zeros(t,n,length(ori));
                 
                 
-                for i  = 1:length(orient)
+                for i  = 1:length(ori)
                     % bootstrapping to get a reduced matrix of t trials
                     t_highConRespOri_bsTrials(:,:,i) = highConRespOri(rp1(1:t),:,i);%datasample(highConRespOri(:,:,i),t,1, 'Replace', false); % 3rd param: 1=subsampling trials, 2=subsampling neurons
                     % bootstrapping to get a reduced matrix of n neurons
                     t_highConRespOri_bsNT(:,:,i)= t_highConRespOri_bsTrials(:,rp2(1:n),i);
                 end
                 
-                for i  = 1:length(orient)-1 %comparisons are # of orientations - 1
-                    %here the columns are the diff orientation difference
+                for i  = 1:length(ori)-1 %comparisons are # of oriations - 1
+                    %here the columns are the diff oriation difference
                     %conditions and the rows are the bootstraps
                     if t>(n+5)/2 %if you have more trials than neurons
-                        TFI_NT(b,i) = f_info(t_highConRespOri_bsNT(:,:,i), t_highConRespOri_bsNT(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
+                        TFI_NT(b,i) = f_info(t_highConRespOri_bsNT(:,:,i), t_highConRespOri_bsNT(:,:,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
                     else %less trials than neurons
-                        TFI_NT(b,i) = ft_info(t_highConRespOri_bsNT(:,:,i), t_highConRespOri_bsNT(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
+                        TFI_NT(b,i) = ft_info(t_highConRespOri_bsNT(:,:,i), t_highConRespOri_bsNT(:,:,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
                     end
                 end
                 
@@ -313,53 +311,30 @@ elseif processed==2
     ylabel(h, 'Relative error')
     
 elseif processed==3 % choose a dimensionality, and reduce either neurons or trials and look at FI.
+    
     load('j1_171018_estFI.mat')
-    %
-    %
-    %     for t = 10:10:500 %for these dimensionalities
-    %         %% do by cutting off NEURONS
-    %         n = 500; %use all the trials
-    %        %n = dim; %only use "dim" # of neurons
-    %
-    %             rp1=1:800;
-    %             rp2=1:500;
-    %             t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),length(orient));
-    %             t_highConRespOri_bsN = zeros(t,n,length(orient));
-    %             for i  = 1:2
-    %                 % bootstrapping to get a reduced matrix of t trials
-    %                 t_highConRespOri_bsTrials(:,:,i) = highConRespOri(rp1(1:t),:,i);%datasample(highConRespOri(:,:,i),t,1, 'Replace', false); % 3rd param: 1=subsampling trials, 2=subsampling neurons
-    %                 % bootstrapping to get a reduced matrix of n neurons
-    %                 t_highConRespOri_bsN(:,:,i)= t_highConRespOri_bsTrials(:,rp2(1:n),i);
-    %             end
-    %
-    %             for i  = 1 %comparisons are # of orientations - 1
-    %                 %here the columns are the diff orientation difference
-    %                 %conditions and the rows are the bootstraps
-    %                 if t>(n+3)/2 %if you have more trials than neurons
-    %                     TFI_N(t,i) = f_info(t_highConRespOri_bsN(:,:,i), t_highConRespOri_bsN(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
-    %                     best_k(t/10) = n;
-    %                 else %less trials than neurons
-    %                     [TFI_N(t,i),best_k(t/10)] = ft_info_test(t_highConRespOri_bsN(:,:,i), t_highConRespOri_bsN(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
-    %                 end
-    %             end
-    %
-    %             ratio(t/10) = t/n
-    %      end
-    %
-    
-    
-    
-    
-    
-    skp= 20;
+    skp= 60; % step size
     k = 1;
-    sz = length(10:skp:400);
-        bs_TFI_N = zeros(sz,6);
+    b = 50; %bootstraps
+    sz = length(10:skp:400); % size of the calculated vectors
+    bs_TFI_N = zeros(sz,6);
     err_TFI_N = zeros(sz,6);
+    bs_naiveTFI_N = zeros(sz,6);
+    err_naiveTFI_N = zeros(sz,6);
+    var_TFI_N = zeros(sz,6);
+    
     bs_TFI_T = zeros(sz,6);
     err_TFI_T = zeros(sz,6);
-    TFI_N = zeros(sz,6);
-    TFI_T = zeros(sz,6);
+    bs_naiveTFI_T = zeros(sz,6);
+    err_naiveTFI_T = zeros(sz,6);
+    var_TFI_T = zeros(sz,6);
+    
+    TFI_N = zeros(b,6);
+    naiveTFI_N = zeros(b,6);
+    varTFI_N = zeros(b,6);
+    TFI_T = zeros(b,6);
+    naiveTFI_T = zeros(b,6);
+    varTFI_T = zeros(b,6);
     
     
     for dim = 10:skp:500 %for these dimensionalities
@@ -369,192 +344,302 @@ elseif processed==3 % choose a dimensionality, and reduce either neurons or tria
         for b  = 1:50 %bootstrap 100 times
             rp1=randperm(800);
             rp2=randperm(500);
-          
-            t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),length(orient));
-            t_highConRespOri_bsN = zeros(t,n,length(orient));
-            for i  = 1:length(orient)
+            
+            t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),length(ori));
+            t_highConRespOri_bsN = zeros(t,n,length(ori));
+            for i  = 1:length(ori)
                 % bootstrapping to get a reduced matrix of t trials
-                t_highConRespOri_bsTrials(:,:,i) = highConRespOri(rp1(1:t),:,i);%datasample(highConRespOri(:,:,i),t,1, 'Replace', false); % 3rd param: 1=subsampling trials, 2=subsampling neurons
+                t_highConRespOri_bsTrials(:,:,i) = highConRespOri(rp1(1:t),:,i);
                 % bootstrapping to get a reduced matrix of n neurons
                 t_highConRespOri_bsN(:,:,i)= t_highConRespOri_bsTrials(:,rp2(1:n),i);
+                
             end
             
-            for i  = 1:length(orient)-1 %comparisons are # of orientations - 1
-                %here the columns are the diff orientation difference
+            for i  = 1:length(ori)-1 %comparisons are # of orientations - 1
+                %here the columns are the diff oriation difference
                 %conditions and the rows are the bootstraps
-                if  t>(n+2)/2 %if you have more trials than neurons  
-                    [TFI_N(b,i) idx(b,i)] = f_info(t_highConRespOri_bsN(:,:,i), t_highConRespOri_bsN(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
-                else %less trials than neurons
-                    %[TFI_N(b,i) idx(b,i)] = ft_info(t_highConRespOri_bsN(:,:,i), t_highConRespOri_bsN(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
-                   % K(b,i) = 2*dim-5;
-                end
+                % if  t>(n+2)/2 %if you have more trials than neurons
+                [TFI_N(b,i) idx(b,i) naiveTFI_N(b,i) varTFI_N(b,i)] = f_info(t_highConRespOri_bsN(:,:,i), t_highConRespOri_bsN(:,:,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
+                % end
             end
         end
         %each row is a dimension (# neurons)
-        bs_TFI_N(k,:) = mean(TFI_N,1); %here is taking mean across all conditions (should also do for just one condition at a time)
-        err_TFI_N(k,:) = sem(TFI_N,1);
+        bs_TFI_N(k,:) = mean(TFI_N,1); % here is taking mean across all conditions (should also do for just one condition at a time)
+        err_TFI_N(k,:) = std(TFI_N,[],1);
+        var_TFI_N(k,:) = mean(varTFI_N,1); %any variance on this reflects the variance of the 6 orientation difference conditions and bootstrapping
+        
         idx_TFI_N(k,:) = mean(idx,1);
-        K_TFI_N(k,:) = mean(K,1);
+        
+        bs_naiveTFI_N(k,:) = mean(naiveTFI_N,1);
+        err_naiveTFI_N(k,:) = std(naiveTFI_N,[],1);
+        
         
         %figure;shadedErrorBar([10:10:500]',mean(bs_TFI_N,2),std(bs_TFI_N,[],2),[],1)
         
         %% do by cutting off TRIALS
         t = dim;  %has to be t<(n+2)/2, new dim is K = 2T-2, only use "dim" # of trials
-       % n = 400;  % keep all neurons
+        % n = 400;  % keep all neurons
         for b  = 1:50 %bootstrap 100 times
             n = 500; % keep all neurons
             rp1=randperm(800);
             rp2=randperm(500);
-            t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),length(orient));
-            t_highConRespOri_bsT = zeros(t,n,length(orient));
-            for i  = 1:length(orient)
+            t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),length(ori));
+            t_highConRespOri_bsT = zeros(t,n,length(ori));
+            for i  = 1:length(ori)
                 % bootstrapping to get a reduced matrix of t trials
                 t_highConRespOri_bsTrials(:,:,i) = highConRespOri(rp1(1:t),:,i);%datasample(highConRespOri(:,:,i),t,1, 'Replace', false); % 3rd param: 1=subsampling trials, 2=subsampling neurons
                 % bootstrapping to get a reduced matrix of n neurons
                 t_highConRespOri_bsT(:,:,i)= t_highConRespOri_bsTrials(:,rp2(1:n),i); %t x n
             end
             
-            for i  = 1:length(orient)-1 %comparisons are # of orientations - 1
-                %here the columns are the diff orientation difference
+            for i  = 1:length(ori)-1 %comparisons are # of oriations - 1
+                %here the columns are the diff oriation difference
                 %conditions and the rows are the bootstraps
                 n = 500;
-                if t>(n+5)/2 && t>=n %if you have more trials than neurons
+               % if t>(n+5)/2 && t>=n %if you have more trials than neurons
+                if t>(n+5)/2 %if you have more trials than neurons
                     
-                    [TFI_T(b,i) idx(b,i)] = f_info(t_highConRespOri_bsT(:,:,i), t_highConRespOri_bsT(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
-                elseif t>(n+5)/2 && t<n 
-                     n = t;
-                     
-                     [TFI_T(b,i) idx(b,i)] = f_info(t_highConRespOri_bsT(:,1:n,i), t_highConRespOri_bsT(:,1:n,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
-               
+                    [TFI_T(b,i) idx(b,i) naiveTFI_T(b,i) varTFI_T(b,i)] = f_info(t_highConRespOri_bsT(:,:,i), t_highConRespOri_bsT(:,:,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
+                    %elseif t>(n+5)/2 && t<n
+                    %elseif t<n %removing neurons all the way down
+                    %    n = t;
+                    
+                    %     [TFI_T(b,i) idx(b,i) naiveTFI_T(b,i) varTFI_T(b,i)] = f_info(t_highConRespOri_bsT(:,1:n,i), t_highConRespOri_bsT(:,1:n,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
+                    
                 elseif t<(n+5)/2 %less trials than neurons
-                    [TFI_T(b,i) idx(b,i)] = ft_info(t_highConRespOri_bsT(:,:,i), t_highConRespOri_bsT(:,:,i+1),orient(i),orient(i+1));%this is the bias-corrected FI in units of rad^-2
-                    K(b,i) = 2*dim-5;
+                    [TFI_T(b,i) idx(b,i) naiveTFI_T(b,i) varTFI_T(b,i)] = ft_info(t_highConRespOri_bsT(:,:,i), t_highConRespOri_bsT(:,:,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
+                    
                 end
             end
         end
         %each row is a dimension (# neurons)
         bs_TFI_T(k,:) = mean(TFI_T,1); %here is taking mean across all conditions (should also do for just one condition at a time)
-        err_TFI_T(k,:) = sem(TFI_T,1);
+        err_TFI_T(k,:) = std(TFI_T,[],1);
+        var_TFI_T(k,:) = mean(varTFI_T,1); %any variance on this reflects the variance of the 6 orientation difference conditions and bootstrapping
+        
         idx_TFI_T(k,:) = mean(idx,1);
-        K_TFI_T(k,:) = mean(K,1);
+        
+        bs_naiveTFI_T(k,:) = mean(naiveTFI_T,1);
+        err_naiveTFI_T(k,:) = std(naiveTFI_T,[],1);
+        
         k = k+1;
     end% dimensions
-    
+    %save('j1_new.mat')
+    % FI found with neurons vs FI found with trials
     figure;plot(mean(bs_TFI_N,2),mean(bs_TFI_T,2),'o')
     errorbar(mean(bs_TFI_N,2),mean(bs_TFI_T,2),mean(err_TFI_T,2),mean(err_TFI_T,2),mean(err_TFI_N,2),mean(err_TFI_N,2),'o')
     axis equal; dline;
     xlabel('I_F (reduced dim using neurons');ylabel('I_F reduced dim using trials')
     prettyplot
     
+    % FI vs neurons and vs trials
     figure;
     subplot 121
-    shadedErrorBar([10:skp:400]',mean(bs_TFI_N,2),std(bs_TFI_N,[],2),[],1)
+    shadedErrorBar([10:skp:dim]',mean(bs_TFI_N,2),std(bs_TFI_N,[],2),[],1)
     xlabel('# neurons');ylabel('I_F (rad^{-2})')
-    title('# trials = 800')
+    title('# trials = 500')
     prettyplot
     subplot 122;
-    shadedErrorBar([10:skp:400]',mean(bs_TFI_T,2),std(bs_TFI_T,[],2),[],1)
+    shadedErrorBar([10:skp:dim]',mean(bs_TFI_T,2),std(bs_TFI_T,[],2),[],1)
     hold on;line([250 250],[-40 120],'Color','r')
     xlabel('# trials');
-    title('# neurons = 400')
+    title('# neurons = dim')
     prettyplot
     equalabscissa(1,2)
     suptitle('reducing dimensionality by reducing neurons vs. reducing trials')
     
-    figure;
-    shadedErrorBar([10:skp:400]',mean(bs_TFI_N,2),std(bs_TFI_N,[],2),[],1)
+    
+    % above plot overlayed one on top of another
+    % plot each condition separately
+    names = {'0-15^o'; '15-30^o'; '30-45^o'; '45-60^o'; '60-75^o';'75-90^o'};
+    figure;hold on;
+    for i = 1:6
+        subplot (2,3,i)
+        shadedErrorBar([10:skp:dim]',bs_TFI_N(:,i),err_TFI_N(:,i),[],1)
+        
+        hold on;
+        shadedErrorBar([10:skp:dim]',bs_TFI_T(:,i),err_TFI_T(:,i),{'ro-','markerfacecolor',[1 0 0]},1)
+        hold on;line([250 250],[-40 120],'Color','r')
+        title(names{i})
+        prettyplot
+        
+    end
+    subplot 234;hold on;
     xlabel('rank');ylabel('I_F (rad^{-2})')
-   hold on;
-    shadedErrorBar([10:skp:400]',mean(bs_TFI_T,2),std(bs_TFI_T,[],2),[],1)
-    hold on;line([250 250],[-40 120],'Color','r')
-    prettyplot
- 
+    equalabscissa(2,3)
+    
     suptitle('reducing dimensionality by reducing neurons vs. reducing trials')
+    prettyplot
     
-    
-    
-    
-    
+    % necess dimensionality
     figure;
     subplot 121
-    plot([10:skp:400]',mean(idx_TFI_N(1:40,:),2))
+    plot([10:skp:dim]',mean(idx_TFI_N,2))
     xlabel('# neurons');ylabel('necessary dimensionality (\lambda_k > 0)')
-    title('# trials = 800'); axis equal; axis([0 400 0 400]);dline;
+    title('# trials = 500'); axis equal; axis([0 dim 0 dim]);dline;
     prettyplot
     subplot 122;
-    plot([10:skp:400]',mean(idx_TFI_T(1:40,:),2)); axis equal; axis([0 400 0 400]);dline;
-    hold on;line([250 250],[0 400],'Color','r')
+    plot([10:skp:dim]',mean(idx_TFI_T,2)); axis equal; axis([0 dim 0 dim]);dline;
+    hold on;line([250 250],[0 dim],'Color','r')
     xlabel('# trials');
     title('# neurons = 500')
     prettyplot; equalabscissa(1,2)
+elseif processed ==4
+    % load('j1_new.mat')
+    
+    k = 1;
+    for dim = 10:skp:800 %for these dimensionalities
+        %% here only use 1 orientation difference
+        %% do by cutting off TRIALS
+        t = dim;  %has to be t<(n+2)/2, new dim is K = 2T-2, only use "dim" # of trials
+        % n = 400;  % keep all neurons
+        for b  = 1:50 %bootstrap 100 times
+            n = 500; % keep all neurons
+            rp1=randperm(800);
+            rp2=randperm(500);
+            t_highConRespOri_bsTrials = zeros(t,size(highConRespOri,2),2);
+            t_highConRespOri_bsT = zeros(t,n,2);
+            for i  = 1:2
+                % bootstrapping to get a reduced matrix of t trials
+                t_highConRespOri_bsTrials(:,:,i) = highConRespOri(rp1(1:t),:,i);%datasample(highConRespOri(:,:,i),t,1, 'Replace', false); % 3rd param: 1=subsampling trials, 2=subsampling neurons
+                % bootstrapping to get a reduced matrix of n neurons
+                t_highConRespOri_bsT(:,:,i)= t_highConRespOri_bsTrials(:,rp2(1:n),i); %t x n
+            end
+            
+            for i  = 1 %comparisons are # of oriations - 1
+                %here the columns are the diff oriation difference
+                %conditions and the rows are the bootstraps
+                n = 500;
+                if t>(n+5)/2 && t>=n %if you have more trials than neurons
+                    
+                    [TFI_T(b,i) idx(b,i) naiveTFI_T(b,i) varTFI_T(b,i)] = f_info(t_highConRespOri_bsT(:,:,i), t_highConRespOri_bsT(:,:,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
+                elseif t<n
+                    n = t;
+                    [TFI_T(b,i) idx(b,i) naiveTFI_T(b,i) varTFI_T(b,i)] = f_info(t_highConRespOri_bsT(:,1:n,i), t_highConRespOri_bsT(:,1:n,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
+                    
+                end
+                %                 elseif t>(n+5)/2 && t<n
+                %                     n = t;
+                %
+                %                     [TFI_T(b,i) idx(b,i) naiveTFI_T(b,i) varTFI_T(b,i)] = f_info(t_highConRespOri_bsT(:,1:n,i), t_highConRespOri_bsT(:,1:n,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
+                %
+                %                 elseif t<(n+5)/2 %less trials than neurons
+                %                     [TFI_T(b,i) idx(b,i) naiveTFI_T(b,i) varTFI_T(b,i)] = ft_info(t_highConRespOri_bsT(:,:,i), t_highConRespOri_bsT(:,:,i+1),ori(i),ori(i+1));%this is the bias-corrected FI in units of rad^-2
+                %
+            end
+            
+        end
+        
+        %each row is a dimension (# trials)
+        bs_TFI_T(k,:) = mean(TFI_T(:,1)); %here is taking mean across all conditions (should also do for just one condition at a time)
+        err_TFI_T(k,:) = std(TFI_T(:,1));
+        var_TFI_T(k,:) = mean(varTFI_T(:,1)); %any variance on this reflects the variance of bootstrapping
+        
+        idx_TFI_T(k,:) = mean(idx,1);
+        
+        bs_naiveTFI_T(k,:) = mean(naiveTFI_T(:,1));
+        err_naiveTFI_T(k,:) = std(naiveTFI_T(:,1));
+        
+        k = k+1;
+    end% dimensions
 end
 
 
-end
 
-function [CFI idx] = f_info(r_s1,r_s2,s1,s2)
-% estimating f'
-f_prime = (mean(r_s2)-mean(r_s1))./(s2-s1);
+%% comparison with naiveFI
+xplot = [10    70   130   190   250   310   370   430  490  550   610   670   730   790];
+% use all neurons, plot of FI vs trials
+figure; hold on;
+shadedErrorBar(xplot,bs_TFI_T(2:end,1),err_TFI_T(2:end,1),{'b','markerfacecolor',[0 0 1]},1)
+shadedErrorBar(xplot,mean(bs_naiveTFI_T,2),mean(err_naiveTFI_T,2),{'g','markerfacecolor',[0 1 0]},1)
+plot([0 800],[mean(bs_TFI_T(end,:),2) mean(bs_TFI_T(end,:),2)],'k--')
+xlabel('# trials')
+ylabel('Fisher Information (rad^{-2})')
+prettyplot
 
-% estimating sigma
-Sigma = 0.5*(cov(r_s1) + cov(r_s2));
+figure; hold on;
+%variance doesn't match?
+shadedErrorBar(xplot,mean(bs_TFI_T,2),mean(err_TFI_T,2)*sqrt(6),[],1) %std across bootstrapped samples
+% shadedErrorBar(xplot,mean(bs_TFI_T,2),std(bs_TFI_T,[],2),[],1) %std across the 6 different orientation differences
+shadedErrorBar(xplot,mean(bs_TFI_T,2),sqrt(mean(var_TFI_T,2)),{'r','markerfacecolor',[1 0 0]},1)
 
-[E] = sort(eig(Sigma),'descend');
-idx = max(find(E<0.001,1),0);
-if isempty(idx)
-    idx=0;
-end
+xlabel('# trials')
+ylabel('Fisher Information (rad^{-2})')
 
-% estimating Fischer information
-FI = (f_prime/Sigma)*f_prime'; %f_prime*inv(Sigma)*f_prime';
+prettyplot
 
-% bias-correction
-T = size(r_s1,1);
-N = size(r_s1,2);
-CFI = FI*((2*T-N-3)/(2*T-2)) - ((2*N)/(T*(s2-s1)^2));
-CFI = 1/((((1/CFI)*(pi/180)^2)));
-end
-
-function [CTFI, idx] = ft_info(r_s1,r_s2,s1,s2)
-%estimating from a truncated matrix
-T = size(r_s1,1);
-% estimating f'
-f_prime = (mean(r_s2)-mean(r_s1))./(s2-s1);
-
-% estimating sigma
-Sigma = 0.5*(cov(r_s1) + cov(r_s2));
-
-% singular decomposition
-[E] = sort(eig(Sigma),'descend');
-idx = find(E<0.001,1);
-%idx = (size(r_s1,1) + size(r_s2,1))-5; %cut off eig at K=2T-5
-%idx = T;
-%[U,S,V] = svd(Sigma);
-[EVect, EVal] = eig(Sigma);
-V = flip(EVect,2);
-%var_vec = flipud(diag(EVal));
-%pct = cumsum(var_vec) / sum(diag(EVal));% Calculate the cumulative percentage of the variances.
-% Find the 99% variance
-%idx = find(pct >= 0.99, 1);
-%figure(1);hold on;plot(E)
-
-%A = V(:,1:ceil(idx-5))'; % low-d subspace
-A = V(:,1:ceil(T))'; % low-d subspace
-
-g_prime = (A*f_prime')';
-V_Sigma = A*Sigma*A';
-
-% estimating Fischer information
-TFI = (g_prime/V_Sigma)*g_prime';
-
-% bias-correction (derive this!)
-K = size(g_prime,2);
-
-CTFI = TFI*((2*T-K-3)/(2*T-2)) - ((2*K)/(T*(s2-s1)^2));
-CTFI = 1/(((1/CTFI)*(pi/180)^2)); %from inv degrees to radians
-
+figure;
+shadedErrorBar([10:skp:dim]',mean(bs_naiveTFI_T,2),std(bs_naiveTFI_T,[],2),[],1)
+hold on;shadedErrorBar([10:skp:dim]',mean(bs_TFI_T,2),std(bs_TFI_T,[],2),{'g','markerfacecolor',[0 1 0]},1)
 
 end
+
+
+
+%
+% function [CFI idx] = f_info(r_s1,r_s2,s1,s2)
+% % estimating f'
+% f_prime = (mean(r_s2)-mean(r_s1))./(s2-s1);
+%
+% % estimating sigma
+% Sigma = 0.5*(cov(r_s1) + cov(r_s2));
+%
+% [E] = sort(eig(Sigma),'descend');
+% idx = max(find(E<0.001,1),0);
+% if isempty(idx)
+%     idx=0;
+% end
+%
+% % estimating Fischer information
+% FI = (f_prime/Sigma)*f_prime'; %f_prime*inv(Sigma)*f_prime';
+%
+% % bias-correction
+% T = size(r_s1,1);
+% N = size(r_s1,2);
+% CFI = FI*((2*T-N-3)/(2*T-2)) - ((2*N)/(T*(s2-s1)^2));
+% CFI = 1/((((1/CFI)*(pi/180)^2)));
+% end
+%
+% function [CTFI, idx] = ft_info(r_s1,r_s2,s1,s2)
+% %estimating from a truncated matrix
+% T = size(r_s1,1);
+% % estimating f'
+% f_prime = (mean(r_s2)-mean(r_s1))./(s2-s1);
+%
+% % estimating sigma
+% Sigma = 0.5*(cov(r_s1) + cov(r_s2));
+%
+% % singular decomposition
+% [E] = sort(eig(Sigma),'descend');
+% idx = find(E<0.001,1);
+% %idx = (size(r_s1,1) + size(r_s2,1))-5; %cut off eig at K=2T-5
+% %idx = T;
+% %[U,S,V] = svd(Sigma);
+% [EVect, EVal] = eig(Sigma);
+% V = flip(EVect,2);
+% %var_vec = flipud(diag(EVal));
+% %pct = cumsum(var_vec) / sum(diag(EVal));% Calculate the cumulative percentage of the variances.
+% % Find the 99% variance
+% %idx = find(pct >= 0.99, 1);
+% %figure(1);hold on;plot(E)
+%
+% %A = V(:,1:ceil(idx-5))'; % low-d subspace
+% A = V(:,1:ceil(T))'; % low-d subspace
+%
+% g_prime = (A*f_prime')';
+% V_Sigma = A*Sigma*A';
+%
+% % estimating Fischer information
+% TFI = (g_prime/V_Sigma)*g_prime';
+%
+% % bias-correction (derive this!)
+% K = size(g_prime,2);
+%
+% CTFI = TFI*((2*T-K-3)/(2*T-2)) - ((2*K)/(T*(s2-s1)^2));
+% CTFI = 1/(((1/CTFI)*(pi/180)^2)); %from inv degrees to radians
+%
+%
+% end
 
 function [CTFI,c] = ft_info_test(r_s1,r_s2,s1,s2)
 %estimating from a truncated matrix
@@ -614,14 +699,5 @@ end
 
 CTFI = CTFI_final(c);
 %CTFI_final(2*T-5);
-
-end
-
-function t_matrix = trunc(matrix, num)
-% truncate the data matrix
-% input: matrix is the matrix you want to truncate, num is how many trials you want to keep
-% output: t_matrix output matrix
-
-t_matrix  = matrix(1:num,:);
 
 end

@@ -13,7 +13,7 @@ load('par.mat')
 T = 800;
 
 k = 1;
-skp = 20;
+skp = 60;
 %% do by cutting off TRIALS
 %for dim = 252:4:800 %for these dimensionalities
 for dim = 10:skp:800 %for these dimensionalities
@@ -151,8 +151,6 @@ prettyplot
 %% verification that FI + bias correction (on truncation) works
 % verifying that sampling the F info from a generated dataset with
 % statistics
-
-
 
 end
 
