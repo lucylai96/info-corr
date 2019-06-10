@@ -109,54 +109,77 @@ if processed ==0
 elseif processed ==1
     load('CV_early_stop.mat')
     load('j1_new.mat')
+    load('j1_dimreduce.mat')
     
-    % use all neurons, plot of FI vs trials
-    figure;shadedErrorBar(10:skp:dim,mean(FIVAL_ES_T,2),mean(FIVALerr_ES_T,2),{'r','markerfacecolor',[1 0 0]},1)
-    hold on; shadedErrorBar(10:skp:dim,mean(FITR_ES_T,2),mean(FITRerr_ES_T,2),{'r','markerfacecolor',[1 0 0]},1)
-    plot([0 800],[80 80],'r--');axis([0 800 -50 250])
+    
+    
+    names = {'0-15^o'; '15-30^o'; '30-45^o'; '45-60^o'; '60-75^o';'75-90^o'};figure; hold on;
+    figure; hold on;
+    for i = 1:6
+        subplot (2,3,i); hold on;
+        plot([0 800],[mean(bs_TFI_T(end,i)) mean(bs_TFI_T(end,i))],'k--')
+        line([252.5 252.5],[-50 300],'Color','k')
+        axis([ 0 800 -50 300])
+        title(names{i})
+        prettyplot
+    end
+    equalabscissa(2,3)
+    subplot 231
     xlabel('# trials')
     ylabel('Fisher Information (rad^{-2})')
-    prettyplot
     
-    xplot = [10    70   130   190   250   310   370   430   490 490  550   610   670   730   790];
-    shadedErrorBar(xplot,mean(bs_TFI_T,2),mean(err_TFI_T,2)*sqrt(6),{'b','markerfacecolor',[0 0 1]},1)
-    shadedErrorBar(xplot,mean(bs_naiveTFI_T,2),mean(err_naiveTFI_T,2),{'g','markerfacecolor',[0 1 0]},1)
-    plot([0 800],[mean(bs_TFI_T(end,:),2) mean(bs_TFI_T(end,:),2)],'k--')
-    xlabel('# trials')
-    ylabel('Fisher Information (rad^{-2})')
-    prettyplot
+    for i = 1:6
+        subplot (2,3,i); hold on;
+        shadedErrorBar([10:skp:dim]',bs_TFI_T(:,i),sqrt(var_TFI_T(:,i)),{'b','markerfacecolor',[0 0 1]},1)
+        shadedErrorBar([310:skp:dim]',bs_naiveTFI_T(6:end,i),err_naiveTFI_T(6:end,i),{'g','markerfacecolor',[0 0 1]},1)
+        prettyplot
+    end
     
+    for i = 1:6
+        subplot (2,3,i);shadedErrorBar(10:skp:dim,FIVAL_ES_T(:,i),FIVALerr_ES_T(:,i),{'r','markerfacecolor',[1 0 0]},1)
+        hold on; shadedErrorBar(10:skp:dim,FITR_ES_T(:,i),FITRerr_ES_T(:,i),{'r','markerfacecolor',[1 0 0]},1)
+        % plot([0 800],[80 80],'r--');
+        
+    end
+    
+    %
+    %     % use all neurons, plot of FI vs trials
+    %     figure;shadedErrorBar(10:skp:dim,mean(FIVAL_ES_T,2),mean(FIVALerr_ES_T,2),{'r','markerfacecolor',[1 0 0]},1)
+    %     hold on; shadedErrorBar(10:skp:dim,mean(FITR_ES_T,2),mean(FITRerr_ES_T,2),{'r','markerfacecolor',[1 0 0]},1)
+    %     plot([0 800],[80 80],'r--');axis([0 800 -50 250])
+    %     xlabel('# trials')
+    %     ylabel('Fisher Information (rad^{-2})')
+    %     prettyplot
+    %
+    %     xplot = [10    70   130   190   250   310   370   430   490 490  550   610   670   730   790];
+    %     shadedErrorBar(xplot,mean(bs_TFI_T,2),mean(err_TFI_T,2)*sqrt(6),{'b','markerfacecolor',[0 0 1]},1)
+    %     shadedErrorBar(xplot,mean(bs_naiveTFI_T,2),mean(err_naiveTFI_T,2),{'g','markerfacecolor',[0 1 0]},1)
+    %     plot([0 800],[mean(bs_TFI_T(end,:),2) mean(bs_TFI_T(end,:),2)],'k--')
+    %     xlabel('# trials')
+    %     ylabel('Fisher Information (rad^{-2})')
+    %     prettyplot
+    %
     
     %% error (MSE)
     
     figure;hold on;
-    
-    bias1 = (mean(bs_TFI_T(end,:),2)-mean(bs_TFI_T,2)).^2;
-    bias2 = (mean(bs_TFI_T(end,:),2)-mean(bs_naiveTFI_T,2)).^2;
-    bias3 = (mean(bs_TFI_T(end,:),2)-mean(FIVAL_ES_T,2)).^2;
-    plot(xplot,bias1+(mean(err_TFI_T,2)*sqrt(6)).^2,'b')
-    plot(xplot,bias2+(mean(err_naiveTFI_T,2)*sqrt(6)).^2,'g')
-    plot(10:skp:dim,bias3+ (mean(FIVALerr_ES_T,2)*sqrt(6)).^2 ,'r')
-    legend('BC estimator','naive estimator','CV decoder')
-    
-    xlabel('# trials')
-    ylabel('mean squared error')
-    
-    prettyplot
-    
-    %% variance of the estimators
-    figure;hold on;
-    
-    plot(xplot,mean(err_TFI_T*sqrt(6),2),'b')
-    plot(xplot,mean(err_naiveTFI_T,2),'g')
-    plot(10:skp:dim,mean(FIVALerr_ES_T,2),'r')
-    legend('BC estimator','naive estimator','CV decoder')
+    for i = 1:6
+        subplot (2,3,i); hold on;
+        bias1 = (bs_TFI_T(end,i)-bs_TFI_T(:,i)).^2;
+        bias2 = (bs_TFI_T(end,i)-bs_naiveTFI_T(:,i)).^2;
+        bias3 = (bs_TFI_T(end,i)-FIVAL_ES_T(:,i)).^2;
+        plot(10:skp:dim,sqrt(bias1+var_TFI_T),'b')
+        plot(310:skp:dim,sqrt(bias2(6:end)+(err_naiveTFI_T(6:end,i)).^2),'g')
+        plot(10:skp:dim,sqrt(bias3+ (FIVALerr_ES_T(:,i)).^2) ,'r')
+        title(names{i})
+        line([252.5 252.5],[0 800],'Color','k')
+        prettyplot
+    end
+    subplot(2,3,4)
     
     xlabel('# trials')
-    ylabel('STD of estimator')
-    
-    prettyplot
-    
+    ylabel('RMSE')
+    equalabscissa(2,3)
     
     
     %% error vs ratio of trials to neurons

@@ -336,9 +336,10 @@ elseif processed==3 % choose a dimensionality, and reduce either neurons or tria
     naiveTFI_T = zeros(b,6);
     varTFI_T = zeros(b,6);
     
-    
-    for dim = 10:skp:500 %for these dimensionalities
+    neuron =0;
+    for dim = 10:skp:800 %for these dimensionalities
         %% do by cutting off NEURONS
+        if neuron == 1
         t = 500; %use all the trials
         n = dim; %only use "dim" # of neurons
         for b  = 1:50 %bootstrap 100 times
@@ -373,7 +374,7 @@ elseif processed==3 % choose a dimensionality, and reduce either neurons or tria
         bs_naiveTFI_N(k,:) = mean(naiveTFI_N,1);
         err_naiveTFI_N(k,:) = std(naiveTFI_N,[],1);
         
-        
+        end
         %figure;shadedErrorBar([10:10:500]',mean(bs_TFI_N,2),std(bs_TFI_N,[],2),[],1)
         
         %% do by cutting off TRIALS
@@ -425,6 +426,8 @@ elseif processed==3 % choose a dimensionality, and reduce either neurons or tria
         k = k+1;
     end% dimensions
     %save('j1_new.mat')
+   
+    
     % FI found with neurons vs FI found with trials
     figure;plot(mean(bs_TFI_N,2),mean(bs_TFI_T,2),'o')
     errorbar(mean(bs_TFI_N,2),mean(bs_TFI_T,2),mean(err_TFI_T,2),mean(err_TFI_T,2),mean(err_TFI_N,2),mean(err_TFI_N,2),'o')
